@@ -13,7 +13,7 @@ namespace Hashing_Test
             Menu.DisplayMenu();
         }
 
-        public static void SelectAllFromUsers()
+        public static void UsersSelectAll()
         {
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
@@ -34,7 +34,7 @@ namespace Hashing_Test
             dBConnection.Close();
         }
 
-        public static void InsertIntoUsers() 
+        public static void UsersInsertNew() 
         {
             Console.WriteLine("Add User\nName: ");
             string name = Console.ReadLine();
@@ -49,7 +49,7 @@ namespace Hashing_Test
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            var reader = dBConnection.RunCommand($"NSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', '{hash}')");
+            var reader = dBConnection.RunCommand($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', '{hash}')");
 
             while (reader.Read())
             {
@@ -61,6 +61,67 @@ namespace Hashing_Test
 
                 Console.WriteLine(result);
             }
+
+            dBConnection.Close();
+        }
+
+        public static void UsersConfirmPassword()
+        {
+            DBConnection dBConnection = new DBConnection();
+            dBConnection.Open();
+
+            Console.WriteLine("Get Password\nName: ");
+            string name = Console.ReadLine();
+
+            Console.WriteLine("Password: ");
+            string plainText = Console.ReadLine();
+            var reader = dBConnection.RunCommand($"SELECT `Email` FROM `Users` WHERE `Username` = '{name}';");
+            
+            string emailResult = "";
+            while (reader.Read())
+            {
+                for (int i = 0; i < reader.GetColumnSchema().Count; i++)
+                {
+                    emailResult += reader.GetValue(i).ToString() + "\t";
+                }
+
+                if (debugModeEnabled == true)
+                {
+                    Console.WriteLine(emailResult);
+                }
+            }
+            dBConnection.Close();
+
+            DBConnection dBConnection2 = new DBConnection();
+            dBConnection2.Open();
+
+            byte[] localHash = HashString(plainText, name, emailResult);
+
+            reader = dBConnection2.RunCommand($"SELECT `Hash` FROM `Users` WHERE `Username` = '{name}';");
+
+            byte[] hashResult = null;
+
+            while (reader.Read())
+            {
+                hashResult = reader.GetFieldValue<byte[]>(0);
+            }
+
+            bool IsCorrect = HashingService.CompareByteArrays(localHash, hashResult);
+
+            if (IsCorrect == true) 
+            {
+                Console.WriteLine("Login Succesful!\nLoading Ticketsystem...");
+                Menu.isEnabled = false;
+                dBConnection.Close();
+                //TicketsystemMenu.Display();
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Login failed!\n Either your username or password were wrong, or your account is not registered with us.");
+            }
+
+            dBConnection.Close();
         }
 
         static byte[] HashString(string plainText, string username, string email)
@@ -71,29 +132,6 @@ namespace Hashing_Test
             byte[] saltedHash = HashingService.GenerateSaltedHash(plainTextHash, saltHash);
 
             return saltedHash;
-        }
-    }
-
-    public class DBConnection
-    {
-        MySqlConnection connection {  get; set; }
-
-        public void Open()
-        {
-            connection = new MySqlConnection("Server=localhost;User ID=root;Password=;Database=ticketsystem_test");
-
-            connection.Open();
-        }
-
-        public void Close() 
-        {
-            connection.Close();
-        }
-
-        public MySqlDataReader RunCommand(string query)
-        {
-            var command = new MySqlCommand(query, connection);
-            return command.ExecuteReader();
         }
     }
 }
