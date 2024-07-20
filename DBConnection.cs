@@ -1,9 +1,12 @@
 ﻿using MySqlConnector;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Xml.Linq;
 
 namespace Hashing_Test
 {
@@ -27,6 +30,17 @@ namespace Hashing_Test
         {
             var command = new MySqlCommand(query, connection);
             return command.ExecuteReader();
+        }
+
+        public void RunCommand(string query, byte[] parameter)
+        {
+            using (var command = new MySqlCommand(query, connection))
+            {
+
+                command.Parameters.Add($"@data", MySqlDbType.Blob).Value = parameter;
+
+                command.ExecuteNonQuery();
+            }
         }
     }
 }

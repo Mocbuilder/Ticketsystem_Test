@@ -49,18 +49,7 @@ namespace Hashing_Test
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            var reader = dBConnection.RunCommand($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', '{hash}')");
-
-            while (reader.Read())
-            {
-                string result = "";
-                for (int i = 0; i < reader.GetColumnSchema().Count; i++)
-                {
-                    result += reader.GetValue(i).ToString() + "\t";
-                }
-
-                Console.WriteLine(result);
-            }
+            dBConnection.RunCommand($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', '@data')", hash);
 
             dBConnection.Close();
         }
