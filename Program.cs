@@ -10,6 +10,11 @@ namespace Hashing_Test
 
         static void Main(string[] args)
         {
+            if (debugModeEnabled) 
+            {
+                Console.WriteLine("Debug Mode");
+                TestHashString();
+            }
             Menu.DisplayMenu();
         }
 
@@ -49,7 +54,7 @@ namespace Hashing_Test
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            dBConnection.RunCommand($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', '@data')", hash);
+            dBConnection.RunCommand($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', @data)", hash);
 
             dBConnection.Close();
         }
@@ -71,7 +76,7 @@ namespace Hashing_Test
             {
                 for (int i = 0; i < reader.GetColumnSchema().Count; i++)
                 {
-                    emailResult += reader.GetValue(i).ToString() + "\t";
+                    emailResult += reader.GetValue(i).ToString(); //+ "\t"
                 }
 
                 if (debugModeEnabled == true)
@@ -95,9 +100,7 @@ namespace Hashing_Test
                 hashResult = reader.GetFieldValue<byte[]>(0);
             }
 
-            bool IsCorrect = HashingService.CompareByteArrays(localHash, hashResult);
-
-            if (IsCorrect == true) 
+            if (HashingService.CompareByteArrays(localHash, hashResult) == true) 
             {
                 Console.WriteLine("Login Succesful!\nLoading Ticketsystem...");
                 Menu.isEnabled = false;
@@ -121,6 +124,30 @@ namespace Hashing_Test
             byte[] saltedHash = HashingService.GenerateSaltedHash(plainTextHash, saltHash);
 
             return saltedHash;
+        }
+
+        static void TestHashString()
+        {
+            Console.WriteLine("Add User\nName: ");
+            string name = Console.ReadLine();
+
+            Console.WriteLine("Email: ");
+            string email = Console.ReadLine();
+
+            Console.WriteLine("Password: ");
+            string plainText = Console.ReadLine();
+
+            byte[] hash1 = HashString(plainText, name, email);
+            byte[] hash2 = HashString(plainText, name, email);
+
+            if(HashingService.CompareByteArrays(hash1, hash2) == true)
+            {
+                Console.WriteLine("Its ok");
+            }
+            else
+            {
+                Console.WriteLine("Its not ok");
+            }
         }
     }
 }

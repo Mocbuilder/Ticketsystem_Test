@@ -37,7 +37,7 @@ namespace Hashing_Test
             using (var command = new MySqlCommand(query, connection))
             {
 
-                command.Parameters.Add($"@data", MySqlDbType.Blob).Value = parameter;
+                command.Parameters.Add($"data", MySqlDbType.Blob).Value = parameter;
 
                 command.ExecuteNonQuery();
             }
