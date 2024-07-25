@@ -39,11 +39,6 @@ namespace Hashing_Test
                 saltedHash[toEncrypt.Length + i] = salt[i];
             }
 
-            if(Program.debugModeEnabled == true)
-            {
-                Console.WriteLine("Debug_HashToString: " + algorithm.ComputeHash(saltedHash).ToString());
-            }
-
             return algorithm.ComputeHash(saltedHash);
         }
 

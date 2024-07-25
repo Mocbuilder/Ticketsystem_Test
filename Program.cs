@@ -1,4 +1,5 @@
 ﻿using MySqlConnector;
+using System.Formats.Tar;
 using System.Security.Cryptography;
 using System.Text;
     
@@ -6,15 +7,15 @@ namespace Hashing_Test
 {
     public class Program
     {
-        public static bool debugModeEnabled = true; //toggles debug functions, default is false
-
+        public static bool debugModeEnabled = false; //toggles debug functions, default is false
+        public static Session currentSession = new Session("");
         static void Main(string[] args)
         {
-            if (debugModeEnabled) 
-            {
-                Console.WriteLine("Debug Mode");
-                TestHashString();
-            }
+            //if (debugModeEnabled) 
+            //{
+            //  Console.WriteLine("Debug Mode");
+            //  TestHashString();
+            //}
             Menu.DisplayMenu();
         }
 
@@ -78,11 +79,6 @@ namespace Hashing_Test
                 {
                     emailResult += reader.GetValue(i).ToString(); //+ "\t"
                 }
-
-                if (debugModeEnabled == true)
-                {
-                    Console.WriteLine(emailResult);
-                }
             }
             dBConnection.Close();
 
@@ -91,21 +87,23 @@ namespace Hashing_Test
 
             byte[] localHash = HashString(plainText, name, emailResult);
 
-            reader = dBConnection2.RunCommand($"SELECT `Hash` FROM `Users` WHERE `Username` = '{name}';");
+            var reader2 = dBConnection2.RunCommand($"SELECT `Hash` FROM `Users` WHERE `Username` = '{name}';");
 
             byte[] hashResult = null;
 
-            while (reader.Read())
+            while (reader2.Read())
             {
-                hashResult = reader.GetFieldValue<byte[]>(0);
+                hashResult = reader2.GetFieldValue<byte[]>(0);
             }
 
             if (HashingService.CompareByteArrays(localHash, hashResult) == true) 
             {
+                currentSession.Name = name;
+                currentSession.GetSessionValues(name);
                 Console.WriteLine("Login Succesful!\nLoading Ticketsystem...");
                 Menu.isEnabled = false;
                 dBConnection.Close();
-                //TicketsystemMenu.Display();
+                DBMenu.LoadMenu();
                 return;
             }
             else
@@ -113,7 +111,7 @@ namespace Hashing_Test
                 Console.WriteLine("Login failed!\n Either your username or password were wrong, or your account is not registered with us.");
             }
 
-            dBConnection.Close();
+            dBConnection2.Close();
         }
 
         static byte[] HashString(string plainText, string username, string email)

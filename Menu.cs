@@ -13,9 +13,9 @@ namespace Hashing_Test
         public static void DisplayMenu()
         {
             List<string> options = new List<string>();
-            options.Add("SELECT * FROM Users");
+            options.Add("New Ticket");
             options.Add("INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '', '', '')");
-            options.Add("Get Password of user");
+            options.Add("Login");
             options.Add("Exit");
 
             while (isEnabled)
@@ -33,7 +33,7 @@ namespace Hashing_Test
                 switch (Convert.ToInt32(input))
                 {
                     case 1:
-                        Program.UsersSelectAll(); break;
+                        Environment.Exit(0); break;
                     case 2:
                         Program.UsersInsertNew(); break;
                     case 3:
