@@ -42,7 +42,7 @@ namespace Hashing_Test
 
         public static void UsersInsertNew() 
         {
-            Console.WriteLine("Add User\nName: ");
+            Console.WriteLine("NEW USER\nName: ");
             string name = Console.ReadLine();
 
             Console.WriteLine("Email: ");
@@ -55,7 +55,7 @@ namespace Hashing_Test
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            dBConnection.RunCommand($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', @data)", hash);
+            dBConnection.RunCommandArray($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', @data)", hash);
 
             dBConnection.Close();
         }
@@ -65,7 +65,7 @@ namespace Hashing_Test
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            Console.WriteLine("Get Password\nName: ");
+            Console.WriteLine("LOGIN\nName: ");
             string name = Console.ReadLine();
 
             Console.WriteLine("Password: ");

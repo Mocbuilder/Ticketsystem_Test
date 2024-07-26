@@ -32,12 +32,34 @@ namespace Hashing_Test
             return command.ExecuteReader();
         }
 
-        public void RunCommand(string query, byte[] parameter)
+        public void RunCommandArray(string query, byte[] parameter)
         {
             using (var command = new MySqlCommand(query, connection))
             {
 
                 command.Parameters.Add($"data", MySqlDbType.Blob).Value = parameter;
+
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void RunCommandDate(string query, string parameter)
+        {
+            using (var command = new MySqlCommand(query, connection))
+            {
+
+                command.Parameters.Add($"data", MySqlDbType.Date).Value = parameter;
+
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void RunCommandText(string query, string parameter)
+        {
+            using (var command = new MySqlCommand(query, connection))
+            {
+
+                command.Parameters.Add($"data", MySqlDbType.Text).Value = parameter;
 
                 command.ExecuteNonQuery();
             }
