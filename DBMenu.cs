@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Spectre.Console.Rendering;
 
 namespace Hashing_Test
 {
     public class DBMenu
     {
-        public static bool isEnabled = true;
-
+        static bool exit = false;
         public static void LoadMenu()
         {
 
@@ -23,21 +23,21 @@ namespace Hashing_Test
             DBMenuOption newTicket = new DBMenuOption("New Ticket", SubmitNewTicket);
             menuOptions.Add(1, newTicket);
 
-            DBMenuOption manageTickets = new DBMenuOption("Manage Tickets", ManageTickets);
+            DBMenuOption manageTickets = new DBMenuOption("Manage Tickets", ManageTicketsMenu.LoadMenu);
             menuOptions.Add(2, manageTickets);
 
-            DBMenuOption changePassword = new DBMenuOption("Change my Password", Exit);
-            menuOptions.Add(3, changePassword);
+            DBMenuOption changeEmail = new DBMenuOption("Change my Email", ChangeEmail);
+            menuOptions.Add(3, changeEmail);
 
-            DBMenuOption changeEmail = new DBMenuOption("Change my Email", Exit);
-            menuOptions.Add(4, changeEmail);
+            DBMenuOption changePassword = new DBMenuOption("Change my Password", ChangePassword);
+            menuOptions.Add(4, changePassword);
 
             DBMenuOption exitOption = new DBMenuOption("Exit", Exit);
             menuOptions.Add(5, exitOption);
 
             if (Program.currentSession.isAdmin == true)
             {
-                DBMenuOption newUser = new DBMenuOption("New User", Exit);
+                DBMenuOption newUser = new DBMenuOption("New User", UsersInsertNew);
                 menuOptions.Add(6, newUser);
 
                 DBMenuOption checkAdminStatus = new DBMenuOption("Check AdminStatus of User", CheckAdminOfUser);
@@ -46,7 +46,7 @@ namespace Hashing_Test
                 DBMenuOption changeAdminStatus = new DBMenuOption("Change AdminStatus of User", ChangeAdminOfUser);
                 menuOptions.Add(8, changeAdminStatus);
 
-                DBMenuOption changeName = new DBMenuOption("Change Name of User", Exit);
+                DBMenuOption changeName = new DBMenuOption("Change Name of User", ChangeName);
                 menuOptions.Add(9, changeName);
 
                 DBMenuOption changeEmailAdmin = new DBMenuOption("Change Email of User", Exit);
@@ -54,17 +54,15 @@ namespace Hashing_Test
 
                 DBMenuOption deleteUser = new DBMenuOption("Delete User", Exit);
                 menuOptions.Add(11, deleteUser);
-
-                DBMenuOption manageTicketsAdmin = new DBMenuOption("Manage Tickets (Admin)", Exit);
-                menuOptions.Add(12, manageTicketsAdmin);
             }
 
-            bool exit = false;
+
 
             while (!exit)
             {
                 foreach (int index in menuOptions.Keys)
                 {
+                    Console.WriteLine(Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine);
                     Console.WriteLine(index + "." + menuOptions[index].Name);
                 }
 
@@ -86,6 +84,116 @@ namespace Hashing_Test
             }
 
             Console.WriteLine("Goodbye!");
+        }
+
+        static void SubmitNewTicket()
+        {
+            DBConnection dBConnection = new DBConnection();
+            dBConnection.Open();
+
+            Console.WriteLine("NEW TICKET\nTitle: ");
+            string title = Console.ReadLine();
+
+            Console.WriteLine("Description: ");
+            string description = Console.ReadLine();
+
+            DateTime today = DateTime.Now;
+            string formattedDate = today.ToString("yyyy-MM-dd");
+
+            dBConnection.RunCommandDate($"INSERT INTO `tickets` (`ID`, `Date`, `Username`, `Title`, `Description`, `Comment`, `Status`) VALUES (NULL, @data, '{Program.currentSession.Name}', '{title}', '{description}', NULL, 0)", formattedDate);
+
+            Console.WriteLine("Ticket was submited");
+
+            dBConnection.Close();
+        }
+
+        public static void ChangeEmail()
+        {
+            Console.WriteLine("CHANGE EMAIL\nNew Email: ");
+            string newEmail = Console.ReadLine();
+
+            DBConnection dBConnection2 = new DBConnection();
+            dBConnection2.Open();
+
+            dBConnection2.RunCommand($"UPDATE Users SET Email = '{newEmail}' WHERE Username = '{Program.currentSession.Name}';");
+
+            Console.WriteLine($"Succesfully changed {Program.currentSession.Email} to {newEmail} for User {Program.currentSession.Name}");
+
+            dBConnection2.Close();
+        }
+
+        public static void ChangePassword()
+        {
+            DBConnection dBConnection = new DBConnection();
+            dBConnection.Open();
+
+            Console.WriteLine("CHANGE Password\nNew Password: ");
+            string plainText = Console.ReadLine();
+            byte[] hash = Program.HashString(plainText, Program.currentSession.Name, Program.currentSession.Email);
+
+            DBConnection dBConnection2 = new DBConnection();
+            dBConnection2.Open();
+
+            dBConnection2.RunCommand($"UPDATE Users SET Password = @data WHERE Username = '{Program.currentSession.Name}';", Hash);
+
+            Console.WriteLine($"Succesfully changed password for User {Program.currentSession.Name}");
+
+            dBConnection2.Close();
+        }
+        static void Exit()
+        {
+            Console.WriteLine("Logout complete");
+            exit = true;
+            Menu.DisplayMenu();
+        }
+
+        public static void UsersInsertNew()
+        {
+            Console.WriteLine("NEW USER\nName: ");
+            string name = Console.ReadLine();
+
+            Console.WriteLine("Email: ");
+            string email = Console.ReadLine();
+
+            Console.WriteLine("Password: ");
+            string plainText = Console.ReadLine();
+            byte[] hash = Program.HashString(plainText, name, email);
+
+            DBConnection dBConnection = new DBConnection();
+            dBConnection.Open();
+
+            dBConnection.RunCommandArray($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', @data)", hash);
+
+            dBConnection.Close();
+        }
+
+        static void CheckAdminOfUser()
+        {
+            DBConnection dBConnection = new DBConnection();
+            dBConnection.Open();
+
+            Console.WriteLine("CHECK ADMINSTATUS\nName: ");
+            string name = Console.ReadLine();
+
+            var reader = dBConnection.RunCommand($"SELECT `isAdmin` FROM `Users` WHERE `Username` = '{name}';");
+
+            int currentAdminStatus = 2;
+            while (reader.Read())
+            {
+                for (int i = 0; i < reader.GetColumnSchema().Count; i++)
+                {
+                    currentAdminStatus += Convert.ToInt32(reader.GetValue(i));
+                }
+
+                switch (currentAdminStatus)
+                {
+                    case 0: Console.WriteLine("Current AdminStatus: false"); break;
+                    case 1: Console.WriteLine("Current AdminStatus: true"); break;
+                    default: Console.WriteLine("Current AdminStatus: Couldnt determine."); break;
+                }
+
+            }
+            dBConnection.Close();
         }
 
         static void ChangeAdminOfUser()
@@ -151,101 +259,60 @@ namespace Hashing_Test
             dBConnection2.Close();
         }
 
-        static void CheckAdminOfUser()
+        public static void ChangeName()
         {
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            Console.WriteLine("CHECK ADMINSTATUS\nName: ");
+            Console.WriteLine("CHANGE USERNAME\nName: ");
             string name = Console.ReadLine();
 
-            var reader = dBConnection.RunCommand($"SELECT `isAdmin` FROM `Users` WHERE `Username` = '{name}';");
+            Console.WriteLine("Change to:");
+            string changeTo = Console.ReadLine();
+            
+            var reader = dBConnection.RunCommand($"UPDATE `Users` SET `Username` = '{changeTo}' WHERE `Username` = '{name}';");
 
-            int currentAdminStatus = 2;
-            while (reader.Read())
-            {
-                for (int i = 0; i < reader.GetColumnSchema().Count; i++)
-                {
-                    currentAdminStatus += Convert.ToInt32(reader.GetValue(i));
-                }
-
-                switch (currentAdminStatus)
-                {
-                    case 0: Console.WriteLine("Current AdminStatus: false"); break;
-                    case 1: Console.WriteLine("Current AdminStatus: true"); break;
-                    default: Console.WriteLine("Current AdminStatus: Couldnt determine."); break;
-                }
-
-            }
             dBConnection.Close();
         }
 
-        static void SubmitNewTicket()
+        public static void ChangeEmailAdmin()
         {
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            Console.WriteLine("NEW TICKET\nTitle: ");
-            string title = Console.ReadLine();
+            Console.WriteLine("CHANGE EMAIL\nName: ");
+            string name = Console.ReadLine();
 
-            Console.WriteLine("Description: ");
-            string description = Console.ReadLine();
+            Console.WriteLine("Change EMAIL to:");
+            string changeTo = Console.ReadLine();
 
-            DateTime today = DateTime.Now;
-            string formattedDate = today.ToString("yyyy-MM-dd");
-
-            dBConnection.RunCommandDate($"INSERT INTO `tickets` (`ID`, `Date`, `Username`, `Title`, `Description`, `Comment`, `Status`) VALUES (NULL, @data, '{Program.currentSession.Name}', '{title}', '{description}', NULL, 0)", formattedDate);
-
-            Console.WriteLine("Ticket was submited");
+            var reader = dBConnection.RunCommand($"UPDATE `Users` SET `Email` = '{changeTo}' WHERE `Username` = '{name}';");
 
             dBConnection.Close();
         }
 
-        static void ManageTickets()
+        public static void DeleteUser()
         {
             DBConnection dBConnection = new DBConnection();
             dBConnection.Open();
 
-            Console.WriteLine("MANAGE TICKETS");
+            Console.WriteLine("DELETE USER\nName: ");
+            string name = Console.ReadLine();
 
-            var reader = dBConnection.RunCommand($"SELECT `Title`, `Description`, `Comment`, `Status` FROM `tickets` WHERE `Username` = '{Program.currentSession.Name}'");
+            Console.WriteLine("THIS WILL PERMANENTLY REMOVE THE USER!\nConfirm permanent deletion (y/n): ");
+            string confirm = Console.ReadLine().ToLower();
 
-            while (reader.Read())
+            if (confirm != "y" && confirm != "yes" || confirm == null)
             {
-                string result = "";
-                for (int i = 0; i < reader.GetColumnSchema().Count; i++)
-                {
-                    //maybe as class ? idk
-                    result += reader.GetValue(i).ToString() + "\t";
-                }
-
-                Console.WriteLine(result);
-
-
-                var table = new Table();
-
-                // Add some columns
-                table.AddColumn("Title");
-                table.AddColumn("Description");
-                table.AddColumn("Comment");
-                table.AddColumn("Status");
-
-                // Add some rows
-                table.AddRow("Baz", "[green]Qux[/]");
-                table.AddRow(new Markup("[blue]Corgi[/]"), new Panel("Waldo"));
-
-                // Render the table to the console
-                AnsiConsole.Write(table);
+                Console.WriteLine("ACTION STOPPED\nUSER WAS NOT DELETED, RETURNING...");
+                Exit();
             }
 
+            var reader = dBConnection.RunCommand($"DELETE FROM users WHERE `Users`.`Username` = '{name}';");
+
+            Console.WriteLine("User deleted succesfully");
 
             dBConnection.Close();
-        }
-
-        static void Exit()
-        {
-            isEnabled = false;
-            Console.WriteLine("Logout complete");
         }
     }
 }

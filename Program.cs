@@ -40,25 +40,7 @@ namespace Hashing_Test
             dBConnection.Close();
         }
 
-        public static void UsersInsertNew() 
-        {
-            Console.WriteLine("NEW USER\nName: ");
-            string name = Console.ReadLine();
-
-            Console.WriteLine("Email: ");
-            string email = Console.ReadLine();
-
-            Console.WriteLine("Password: ");
-            string plainText = Console.ReadLine();
-            byte[] hash = HashString(plainText, name, email);
-
-            DBConnection dBConnection = new DBConnection();
-            dBConnection.Open();
-
-            dBConnection.RunCommandArray($"INSERT INTO `users` (`ID`, `Username`, `Email`, `Hash`) VALUES (NULL, '{name}', '{email}', @data)", hash);
-
-            dBConnection.Close();
-        }
+        
 
         public static void UsersConfirmPassword()
         {
@@ -114,7 +96,7 @@ namespace Hashing_Test
             dBConnection2.Close();
         }
 
-        static byte[] HashString(string plainText, string username, string email)
+        public static byte[] HashString(string plainText, string username, string email)
         {
             byte[] plainTextHash = HashingService.ToByte(plainText);
             byte[] saltHash = HashingService.ToByte(username, email);
@@ -145,6 +127,18 @@ namespace Hashing_Test
             else
             {
                 Console.WriteLine("Its not ok");
+            }
+        }
+
+        public static string IntToStatus(int toAdmin)
+        {
+            switch (toAdmin)
+            {
+                case 0: return "Submitted";
+                case 1: return "Work in progress";
+                case 2: return "Closed";
+                case 3: return "Removed";
+                default: Console.WriteLine("WorkStatus value is corrupted. Now defaulted to Submitted"); return "Submitted";
             }
         }
     }

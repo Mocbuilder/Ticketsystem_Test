@@ -12,13 +12,16 @@ namespace Hashing_Test
     {
         public int ID { get; set; }
         public string Name { get; set; }
+        public string Email { get; set; }
         public bool isAdmin { get; set; }
 
         public Session(string name)
         {
+            ID = 0;
+
             Name = name;
 
-            ID = 0;
+            Email = "";
 
             isAdmin = false;
         }
@@ -62,6 +65,20 @@ namespace Hashing_Test
                 case 2: isAdmin = false; Console.WriteLine("The DB didnt respond, now defaulted to false."); break;
                 default: isAdmin = false; Console.WriteLine("Couldnt determine your AdminStatus, now defaulted to false."); break;
             }
+
+            DBConnection dBConnection3 = new DBConnection();
+            dBConnection3.Open();
+
+            var reader3 = dBConnection3.RunCommand($"SELECT `isAdmin` FROM `Users` WHERE `Username` = '{name}';");
+
+            while (reader3.Read())
+            {
+                for (int i = 0; i < reader3.GetColumnSchema().Count; i++)
+                {
+                    Email = reader3.GetValue(i).ToString();
+                }
+            }
+            dBConnection3.Close();
         }
     }
 }
