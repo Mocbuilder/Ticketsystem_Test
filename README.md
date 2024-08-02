@@ -1,6 +1,2 @@
 ﻿# Ticketsystem_Test
-Todo:
-
-
-Done: 
-Fix login system -> emailresult had \t appended as string instead of new line
+Dont think this needs a readme, its doesnt have any use other than as an exercise for me, so ...
